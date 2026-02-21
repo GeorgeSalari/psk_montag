@@ -1,0 +1,6 @@
+[submodule "apps/psk_api"]
+	path = apps/psk_api
+	url = https://github.com/GeorgeSalari/psk_api.git
+[submodule "apps/psk_vue"]
+	path = apps/psk_vue
+	url = https://github.com/GeorgeSalari/psk_vue.git

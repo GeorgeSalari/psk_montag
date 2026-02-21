@@ -1,0 +1,119 @@
+networks:
+  docker_host:
+
+volumes:
+  db_data:
+  redis_data:
+  shared_data:
+  psk_gems:
+  psk_node_modules:
+
+services:
+  psk_redis:
+    image: redis:7-alpine
+    command: redis-server
+    networks:
+      - docker_host
+    volumes:
+      - redis_data:/data
+      - shared_data:/var/shared/psk_redis
+    ports:
+      - 6379:6379
+
+  postgres:
+    image: postgres:14-alpine
+    restart: always
+    networks:
+      - docker_host
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - shared_data:/var/shared
+    ports:
+      - 5432:5432
+
+  psk_api:
+    build:
+      context: ./apps/psk_api
+      dockerfile: Dockerfile.dev
+    image: psk_montag/psk_api:latest
+    stdin_open: true
+    tty: true
+    environment:
+      RAILS_ENV: development
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      REDIS_URL: redis://psk_redis:6379/1
+      PSK_API_HOST: http://localhost:3001
+      PSK_HOST: http://localhost:8080
+    volumes:
+      - ./apps/psk_api:/var/app
+      - shared_data:/var/shared
+      - psk_gems:/bundle
+    container_name: psk_api
+    depends_on:
+      - postgres
+      - psk_redis
+    networks:
+      - docker_host
+    extra_hosts:
+      - localhost:host-gateway
+    entrypoint: dev-entrypoint.sh
+    command: ['rails', 'server', '-p', '3001', '-b', '0.0.0.0']
+    ports:
+      - 3001:3001
+
+  psk_sidekiq:
+    build:
+      context: ./apps/psk_api
+      dockerfile: Dockerfile.dev
+    image: psk_montag/psk_api:latest
+    stdin_open: true
+    tty: true
+    environment:
+      RAILS_ENV: development
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      REDIS_URL: redis://psk_redis:6379/1
+    volumes:
+      - ./apps/psk_api:/var/app
+      - shared_data:/var/shared
+      - psk_gems:/bundle
+    container_name: psk_sidekiq
+    depends_on:
+      - psk_api
+    networks:
+      - docker_host
+    extra_hosts:
+      - localhost:host-gateway
+    entrypoint: dev-entrypoint.sh
+    command: bundle exec sidekiq
+
+  psk_vue:
+    build:
+      context: ./apps/psk_vue
+      dockerfile: Dockerfile.dev
+    image: psk_montag/psk_vue:latest
+    container_name: psk_vue
+    entrypoint: ./dev-entrypoint.sh
+    stdin_open: true
+    tty: true
+    environment:
+      PSK_API_HOST: http://localhost:3001
+      PSK_HOST: http://localhost:8080
+    volumes:
+      - ./apps/psk_vue:/var/app
+      - shared_data:/var/shared
+      - psk_node_modules:/var/app/node_modules
+    depends_on:
+      - psk_api
+    networks:
+      - docker_host
+    command: yarn dev
+    ports:
+      - 8080:8080

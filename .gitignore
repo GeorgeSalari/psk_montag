@@ -1,0 +1,53 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE / editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.key
+config/master.key
+
+# Logs
+*.log
+log/
+tmp/
+
+# Ruby / Rails
+apps/psk_api/.bundle/
+apps/psk_api/vendor/bundle/
+apps/psk_api/log/*
+apps/psk_api/tmp/*
+!apps/psk_api/log/.keep
+!apps/psk_api/tmp/.keep
+apps/psk_api/storage/*
+!apps/psk_api/storage/.keep
+apps/psk_api/tmp/storage/*
+!apps/psk_api/tmp/storage/.keep
+
+# Node / Vue
+apps/psk_vue/node_modules/
+apps/psk_vue/dist/
+apps/psk_vue/npm-debug.log*
+apps/psk_vue/yarn-debug.log*
+apps/psk_vue/yarn-error.log*
+apps/psk_vue/.env.local
+apps/psk_vue/.env.*.local
+
+# Docker
+.docker/
+
+# Misc
+*.pid
+*.seed
+*.pid.lock
+.cache/
